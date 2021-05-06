@@ -1,0 +1,364 @@
+﻿@page "/dictionary"
+
+<h1>Blazor Dictionary</h1>
+
+<div style="border:  5px solid turquoise; border-radius: 25px;">
+    <div class="row" style="padding: 10px;">
+        <div class="col-md-2" style="padding-top: 15px;">
+            <span style="color: turquoise; font-size:x-large; font-weight: bolder; text-shadow: -1px 1px 0 #000">Add A New Entry</span>
+        </div>
+        <div class="input-group col-md-2">
+            <label style="font-weight:700;">New Entry Key</label>
+            <input style="width: 100%;"  @bind="newEntryKey" />
+        </div>
+        <div class="input-group col-md-3">
+            <label style="font-weight:700;">New Entry Members (comma separated)</label>
+            <input  style="width: 100%;"  @bind="newEntryValues">
+        </div>
+        <div class="col-md-2" style="text-align: center;">
+            <br />
+            <button @onclick="AddEntry" style="width: 70%;">Add Entry</button>
+        </div>
+        <div class="col-md-3" style="text-align: left;">
+            <br />
+            <span style="color: red; font-weight: bold; font-size:large;">@entryError</span>
+        </div>
+    </div>
+    <div class="row" style="padding: 10px;">
+        <div class="col-md-2" style="padding-top: 15px;">
+            <span style="color: turquoise; font-size:x-large; font-weight: bolder; text-shadow: -1px 1px 0 #000">Add A New Member</span>
+        </div>
+        <div class="input-group col-md-2">
+            <label style="font-weight:700;">Existing Entry Key</label>
+            <input style="width: 100%;"  @bind="existingEntryKey" />
+        </div>
+        <div class="input-group col-md-3" style="margin: 0px;">
+            <label style="font-weight:700;">New Entry Member (single value)</label>
+            <input  style="width: 100%;"  @bind="newEntryMember">
+        </div>
+        <div class="col-md-2" style="text-align: center;">
+            <br />
+            <button @onclick="AddMember" style="width: 70%;">Add Member</button>
+        </div>
+        <div class="col-md-3" style="text-align: left;">
+            <br />
+            <span style="color: red; font-weight: bold; font-size:large;">@memberError</span>
+        </div>
+    </div>
+    <div class="row" style="padding: 10px;">
+        <div class="col-md-2" style="padding-top: 10px;">
+            <span style="color: turquoise; font-size:x-large; font-weight: bolder; text-shadow: -1px 1px 0 #000">Change Display</span>
+        </div>
+        <div class="col-md-6" style="padding-top: 10px;">
+            <button @onclick="@(() => ShowData("all"))" class="@(allStyling ? "selectedbutton" : "")"  style="margin-right:15px;">Keys and Members</button>
+            <button @onclick="@(() => ShowData("keys"))" class="@(keyStyling ? "selectedbutton" : "")" style="margin-right:15px;">Keys</button>
+            <button @onclick="@(() => ShowData("members"))" class="@(memberStyling ? "selectedbutton" : "")"  style="margin-right:15px;">Members</button>
+        </div>
+    </div>
+    <div class="row" style="padding: 10px;">
+        <div class="col-md-2" style="padding-top: 10px;">
+            <span style="color: turquoise; font-size:x-large; font-weight: bolder; text-shadow: -1px 1px 0 #000">Search Dictionary</span>
+        </div>
+        <div class="col-md-6" style="padding-top: 10px;">
+            <button @onclick="SetSearchingKey" class="@(searchingKey ? "selectedbutton" : "")"  style="margin-right:15px;">Check Key</button>
+            <button @onclick="SetSearchingMember" class="@(searchingMember ? "selectedbutton" : "")"  style="margin-right:15px;">Check For Member by Key</button>
+        </div>
+    </div>
+    <div class="row" style="padding: 10px;">
+        <div class="col-md-2" style="padding-top: 10px;">
+            <span style="color: turquoise; font-size:x-large; font-weight: bolder; text-shadow: -1px 1px 0 #000"></span>
+        </div>
+        @if(searchingKey)
+        {
+            <div class="input-group col-md-2">
+                <label style="font-weight:700;">Key to Search For</label>
+                <input style="width: 100%;"  @bind="keyForKeySearch"/>
+            </div>
+            <div class="col-md-1">
+                <br />
+                <button  @onclick="SearchKey" >Search Key</button>
+            </div>
+        }
+        @if(searchingMember)
+        {
+            <div class="input-group col-md-2">
+                <label style="font-weight:700;">Key to Search</label>
+                <input style="width: 100%;" @bind="keyForMemberSearch" />
+            </div>
+            <div class="input-group col-md-2">
+                <label style="font-weight:700;">Member to Search For In Key</label>
+                <input  style="width: 100%;"  @bind="memberForMemberSearch" >
+            </div>
+            <div class="col-md-2">
+                <br />
+                <button @onclick="SearchMember">Search For Member</button>
+            </div>
+        }
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-6">
+        <br />
+        <span style="color: turquoise; font-size:x-large; font-weight: bolder; text-shadow: -1px 1px 0 #000">@currentDisplayType</span>
+        <ul class="ulStyle">
+            @foreach (var entry in entries)
+            {
+                <li>
+                    @if(hideKeys == false)
+                    {
+                        <span style="font-size: 1.5em;">@entry.Key&nbsp;</span>
+                        <button @onclick="() => Delete(entry)" style="font-weight: bold; color: red; padding: 0px 2px 0px 2px;">X</button>
+                    }
+                    <ol>
+                    @foreach (var value in entry.Values)
+                     {
+                        @if(hideMembers == false)
+                        {
+                            <li>
+                                <span style="font-size: 1.5em;">@value</span>
+                                <button @onclick="() => DeleteValue(entry, value)" style="font-weight: bold; color: red; padding: 0px 2px 0px 2px;">X</button>
+                            </li>
+                        }
+                    }
+                </ol>
+            </li>
+            }
+        </ul>
+    </div>
+    <div class="col-lg-6">
+            <br />
+            <span style="color: turquoise; font-size:x-large; font-weight: bolder; text-shadow: -1px 1px 0 #000">Search Results</span>
+            <p style="color: red; font-weight: bold; font-size:larger;">@searchMessage</p>
+            <span style="font-size: 1.25em; white-space:pre-wrap;">@keySearchMembers</span>
+    </div>
+</div>
+@code {
+    /*"Class level" variables that are functioning as a localState*/
+
+    //in-memory data
+    private List<DictionaryEntry> entries = new();
+
+    //additive inputs
+    private string newEntryKey;
+    private string newEntryValues;
+    private string existingEntryKey;
+    private string newEntryMember;
+
+    //hiding/showing variables
+    private bool hideKeys;
+    private bool hideMembers;
+    private bool searchingKey = false;
+    private bool searchingMember = false;
+
+    //styling variables
+    private bool memberStyling;
+    private bool keyStyling;
+    private bool allStyling = true;
+
+    //error, info, and output messages
+    private string entryError;
+    private string memberError;
+    private string currentDisplayType = "All Keys and Members";
+    private string searchMessage = "";
+    private string keySearchMembers;
+
+    //search inputs
+    private string keyForMemberSearch;
+    private string memberForMemberSearch;
+    private string keyForKeySearch;
+
+    //Setter Methods for Display variables
+    private void SetSearchingKey()
+    {
+        searchingKey = true;
+        searchingMember = false;
+    }
+
+    private void SetSearchingMember()
+    {
+        searchingKey = false;
+        searchingMember = true;
+    }
+
+    //Searches for a specified Member in an Entry that contains a specified Key
+    private void SearchMember()
+    {
+        searchMessage = "";
+        keySearchMembers = "";
+
+        if(!string.IsNullOrWhiteSpace(keyForMemberSearch) && !string.IsNullOrWhiteSpace(memberForMemberSearch))
+        {
+            var sanitizedMember = memberForMemberSearch.Trim().ToLower();
+            var sanitizedKey = keyForMemberSearch.Trim().ToLower();
+
+             if (entries.Where(e => e.Key == sanitizedKey).Any())
+             {
+                if (entries.Where(e => e.Key == sanitizedKey && e.Values.Any(v => v == sanitizedMember)).Any())
+                {
+                    searchMessage = "Found member";
+                    return;
+                 }
+                
+                searchMessage = "Member not Found for Key";
+                return;
+             }
+
+             searchMessage = "Key not found";
+             return;
+        }
+        
+        searchMessage = "Key and Member are Required";      
+    }
+
+    //Searches for a Key then displays the Key's Members if found
+    private void SearchKey()
+    {
+        searchMessage = "";
+        keySearchMembers = "";
+
+        if(!string.IsNullOrWhiteSpace(keyForKeySearch))
+        {
+            var sanitizedKey = keyForKeySearch.Trim().ToLower();
+
+            if (entries.Where(e => e.Key == sanitizedKey).Any())
+            {
+                var  currentMembers = entries.Where(e => e.Key == sanitizedKey).FirstOrDefault().Values;
+                keySearchMembers = "Members:\n" + String.Join(",", currentMembers);
+                searchMessage = "Key Exists";
+                return;
+            }
+
+            searchMessage = "Key not found";
+            return;
+        }
+
+        searchMessage = "Key is Required";
+    }
+
+    //Adds a new Entry by taking a Key and a comma-separated "Values" string from the User.  Key cannot be a duplicate, and Values cannot be duplicated within a Key
+    private void AddEntry()
+    {
+        keySearchMembers = "";
+        searchMessage = "";
+        memberError = "";
+        entryError = "";
+
+        if (!string.IsNullOrWhiteSpace(newEntryKey) && !string.IsNullOrWhiteSpace(newEntryValues))
+        {
+            var formattedKey = newEntryKey.Trim().ToLower();
+            if(!entries.Where(e => e.Key == formattedKey).Any())
+            {
+                var valueList = newEntryValues.Split(",").Where(i => !string.IsNullOrWhiteSpace(i)).Select(i => i.Trim().ToLowerInvariant()).ToList();
+
+                if(valueList.GroupBy(v=> v).Where(v => v.Count() > 1).Any())
+                {
+                    entryError = "No Duplicate Members Allowed in an Entry";
+                    return;            
+                }
+
+                entries.Add(new DictionaryEntry { Key = formattedKey, Values = valueList });
+                newEntryKey = string.Empty;
+                newEntryValues = string.Empty;
+                return;
+            }
+
+            entryError = "An Entry with that Key already exists";
+            return;
+            
+        }
+        
+        entryError = "Key and at least one Value are required";
+    }
+
+    //Adds a Member to an existing Entry
+    private void AddMember()
+     {
+        searchingMember = false;
+        searchingKey = false;
+        searchMessage = "";
+        memberError = "";
+        entryError = "";
+
+        if (!string.IsNullOrWhiteSpace(existingEntryKey) && !string.IsNullOrWhiteSpace(newEntryMember))
+        {
+            var formattedKey = existingEntryKey.Trim().ToLower();
+            var formattedMember = newEntryMember.Trim().ToLower();
+
+            if(entries.Where(e => e.Key == formattedKey).Any())
+            {
+                if(entries.Where(e => e.Key == formattedKey).FirstOrDefault().Values.Contains(formattedMember))
+                {
+                    memberError = "No Duplicate Members Allowed in an Entry";
+                    return;         
+                }
+
+               entries.Where(e => e.Key == formattedKey).FirstOrDefault().Values.Add(formattedMember);
+
+                existingEntryKey = string.Empty;
+                newEntryMember = string.Empty;
+                return;
+            }
+
+            memberError = "No Entry with this Key was Found";
+            return;        
+        }
+        
+        memberError = "Existing Key and new Member are required";
+    }
+
+    //Handles the three Display-changing buttons
+    private void ShowData(string command)
+    {
+         switch(command)
+        {
+            case "keys":
+                currentDisplayType = "All Keys";
+                hideKeys = false;
+                hideMembers = true;
+                keyStyling = true;
+                memberStyling = false;
+                allStyling = false;
+                break;
+            case "members":
+                currentDisplayType = "All Members";
+                hideKeys = true;
+                hideMembers = false;
+                keyStyling = false;
+                memberStyling = true;
+                allStyling = false;
+                break;
+            case "all":
+                currentDisplayType = "All Keys and Members";
+                hideKeys = false;
+                hideMembers = false;
+                 keyStyling = false;
+                memberStyling = false;
+                allStyling = true;
+                break;      
+        }
+    }
+
+    //Deletes a whole Entry
+   private void Delete(DictionaryEntry entry)
+   { 
+        memberError = "";
+        entryError = "";
+        entries.Remove(entry);
+    }
+
+    //Deletes an Entry's Member if it's not the Entry's last, otherwise deletes the entire Entry
+    private void DeleteValue(DictionaryEntry entry, string value)
+    {
+        memberError = "";
+        entryError = "";
+
+        if(entries.Where(e => e.Key == entry.Key).FirstOrDefault().Values.Count() <= 1)
+        {
+            entries.Remove(entry);
+            return;
+        }
+
+        entries.Where(e => e.Key == entry.Key).FirstOrDefault().Values.Remove(value);    
+    }
+
+}
